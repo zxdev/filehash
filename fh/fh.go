@@ -1,7 +1,7 @@
 package main
 
 import (
-	"girhub.com/zxdev/filehash"
+	"github.com/zxdev/filehash"
 	"fmt"
 	"io"
 	"os"
