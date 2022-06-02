@@ -35,8 +35,8 @@ type Reader struct {
 
 // Open a filehash file
 func NewReader(path string) (*Reader, error) {
-	z := new(Reader)
-	return z, z.Open(path)
+	nr := new(Reader)
+	return nr, nr.Open(path)
 }
 
 // Open file and read the filehash header
@@ -49,10 +49,7 @@ func (r *Reader) Open(path string) error {
 }
 
 // Close file
-func (r *Reader) Close() {
-	r.f.Sync()
-	r.f.Close()
-}
+func (r *Reader) Close() { r.f.Close() }
 
 // Read supports io.Reader interface
 func (r *Reader) Read(p []byte) (int, error) { return r.f.Read(p) }
@@ -70,15 +67,15 @@ func (r *Reader) readHeader() error {
 // Writer type for filehash files
 type Writer struct {
 	Header
-	h hash.Hash
-	f *os.File
-	t io.Writer
+	h   hash.Hash
+	f   *os.File
+	tee io.Writer
 }
 
 // Create a filehash file
 func NewWriter(path string) (*Writer, error) {
-	z := new(Writer)
-	return z, z.Create(path)
+	nw := new(Writer)
+	return nw, nw.Create(path)
 }
 
 // Create file and write a blank FileHash header
@@ -91,12 +88,12 @@ func (w *Writer) Create(path string) error {
 	w.prefix = prefix
 	w.suffix = suffix
 	w.h = sha256.New()
-	w.t = io.MultiWriter(w.f, w.h)
+	w.tee = io.MultiWriter(w.f, w.h)
 	return nil
 }
 
 // Writer supports io.Writer interface
-func (w *Writer) Write(p []byte) (int, error) { return w.t.Write(p) }
+func (w *Writer) Write(p []byte) (int, error) { return w.tee.Write(p) }
 
 func (w *Writer) writeHeader() {
 	w.f.Seek(0, 0)
@@ -109,6 +106,5 @@ func (w *Writer) writeHeader() {
 func (w *Writer) Close() {
 	copy(w.checksum[:], w.h.Sum(nil))
 	w.writeHeader()
-	w.f.Sync()
 	w.f.Close()
 }
